@@ -1,0 +1,167 @@
+main(className, lines) ::= <<
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Scanner;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+
+public class <className> { 
+  public static void main(String args[]){
+    Scanner scanner = new Scanner(System.in);
+
+    <lines; separator="\n">
+  }
+  
+  <executeHelper()>
+}
+>>
+
+// Handle the pipe logic
+statement(stat) ::= <<
+<stat; separator="\n">
+>>
+
+//stat templates
+stdout(content) ::= <<
+System.out.println(<content>);
+>>
+
+stderr(content) ::= <<
+System.err.println(<content>);
+>>
+
+stdin(type) ::= "scanner.<stdinMap.(type)>"
+
+execute(content) ::= <<
+execute(<content>)
+>>
+
+executeIsh(filename) ::= <<
+executeIsh(<filename>)
+>>
+
+stringVal(value) ::= <<
+"<value>"
+>>
+
+NL() ::= <<
+"\n"
+>>
+
+// Expression rendering — basic placeholder
+plain(stat) ::= "<stat>"
+parentheses(stat) ::= "(<stat>)"
+
+expr(stat) ::= "<stat>;"
+
+expr2(signal, stat) ::= "<signal><stat>"
+
+expr3(e1, op, e2) ::= "<e1> <op> <e2>"
+
+equals(not, e1, e2) ::= "<not><e1>.equals(<e2>)"
+
+// Variable initialization
+variableInit(var, type) ::= "<typeMap.(type)> <var>;"
+variableInitWithValue(var, type, stat) ::= "<typeMap.(type)> <var> = <stat>;"
+variableSet(var, stat) ::= "<var> = <stat>;"
+variableConvert(type, expr) ::= "(<typeMap.(type)>)"
+
+// while
+
+whileTail(stats, condition) ::= <<
+while (true) {
+  <stats; separator="\n">
+  if (<condition>) {
+    break;
+  }
+}
+>>
+
+whileHead(stats, condition) ::= <<
+while (<condition>) {
+  <stats; separator="\n">
+}
+
+>>
+
+whileMiddle(stats1, stats2, condition) ::= <<
+do  {
+  <stats1; separator="\n">
+     
+  if (<condition>) {
+    <stats2; separator="\n">
+  }
+} while (<condition>);
+>>
+
+decisionIf(condition, stats) ::= <<
+if (<condition>) {
+  <stats; separator="\n">
+}
+>>
+
+decisionIfElse(condition, stats1, stats2) ::= <<
+if (<condition>) {
+  <stats1; separator="\n">
+} else {
+  <stats2; separator="\n">
+}
+>>
+
+// Type conversion
+typeMap ::= [
+  "text": "String",
+  "program": "String",
+  "integer": "int",
+  "real": "double",
+  default: "Object"
+]
+
+stdinMap ::= [
+  "integer": "nextInt()",
+  "real": "nextDouble()",
+  default: "nextLine()"
+]
+
+executeHelper() ::= <<
+public static String execute(String command) {
+      try {
+          ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
+          Process process = builder.start();
+          BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+          StringBuilder output = new StringBuilder();
+          String line;
+          while ((line = reader.readLine()) != null) {
+              output.append(line).append("\n");
+          }
+          process.waitFor();
+          return output.toString();
+      } catch (Exception e) {
+          e.printStackTrace();
+          return "";
+      }
+  }
+
+  public static String executeIsh(String filename) {
+    Object output = null;
+    try {
+        CharStream input = CharStreams.fromFileName(filename);
+        ISHLexer lexer = new ISHLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        ISHParser parser = new ISHParser(tokens);
+        ParseTree tree = parser.prog();
+
+        ISHInterpreter interpreter = new ISHInterpreter();
+        output = interpreter.visit(tree);
+      } catch (Exception e) {
+
+      }
+      
+      return output.toString();
+  }
+>>
+

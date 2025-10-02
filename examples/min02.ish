@@ -1,0 +1,8 @@
+# min01.ish
+integer(stdin "a: ") | store in a: integer;
+integer(stdin "b: ") | store in b: integer;
+integer(stdin "c: ") | store in c: integer;
+a+b | stdout
+a+b+c | stdout
+a/c | stdout
+b*c | stdout

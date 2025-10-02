@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+antlr4 -visitor ISH.g4
+javac ISHMain.java ISHInterpreter.java
+
+antlr4-build CSH
+
+echo "Build Finished Successfully"
